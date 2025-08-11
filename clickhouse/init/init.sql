@@ -16,7 +16,7 @@ PARTITION BY toYYYYMM(load_date)
 ORDER BY (load_date, region);
 
 
-CREATE TABLE default.earth_quake_agg
+CREATE TABLE IF NOT EXISTS default.earth_quake_agg
 (
 
     `place_hash` String,
@@ -27,7 +27,7 @@ ENGINE = SummingMergeTree
 ORDER BY place_hash
 SETTINGS index_granularity = 8192;
 
-CREATE TABLE default.earth_quake_full
+CREATE TABLE IF NOT EXISTS default.earth_quake_full
 (
 
     `id` String,
