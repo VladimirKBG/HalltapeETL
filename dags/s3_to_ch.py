@@ -1,6 +1,7 @@
 import os
 import pendulum
 from airflow import DAG
+from airflow.operators.bash import BashOperator
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
 from airflow.sensors.python import PythonSensor
 from airflow.utils.db import provide_session
@@ -26,6 +27,50 @@ s3_to_ch = DAG(
 
 with s3_to_ch as dag:
 
+    create_ch_tables_agg = BashOperator(
+    task_id="create_ch_tables_agg",
+    bash_command="""
+        curl -u admin:admin 'http://clickhouse:8123/' --data-binary @- <<SQL
+        CREATE TABLE IF NOT EXISTS default.earth_quake_agg
+        (
+            place_hash String,
+            count Int32
+        )
+        ENGINE = SummingMergeTree
+        ORDER BY place_hash
+        SETTINGS index_granularity = 8192
+        """, 
+        dag=dag
+        )
+
+    create_ch_tables_full = BashOperator(
+    task_id="create_ch_tables_full",
+    bash_command="""
+        curl -u admin:admin 'http://clickhouse:8123/' --data-binary @- <<SQL
+        CREATE TABLE IF NOT EXISTS default.earth_quake_full
+        (
+            id String,
+            ts DateTime,
+            load_date Date,
+            magnitude Float64,
+            felt Int64,
+            tsunami Int64,
+            url String,
+            longitude Float64,
+            latitude Float64,
+            depth Float64,
+            place_hash String,
+            updated_at DateTime,
+            load_to_ch_utc DateTime DEFAULT now()
+        )
+        ENGINE = MergeTree
+        PARTITION BY toYYYYMM(updated_at)
+        ORDER BY (load_date, id)
+        SETTINGS index_granularity = 8192
+        """,
+        dag=dag
+    )
+
     def check_s3_file(**context):
         s3 = boto3.client(
             's3',
@@ -37,18 +82,19 @@ with s3_to_ch as dag:
         ds = context['ds']
         key = f"api/earthquake/events_{ds}.json"
         response = s3.list_objects_v2(Bucket=bucket, Prefix=key)
-        if not response:
+        if response is None or response == {} :
             raise AirflowSkipException("Нет новых файлов.")
-
-        return "Contents" in response and len(response["Contents"]) > 0
+        else:
+            return "Contents" in response and len(response["Contents"]) > 0
 
     check_s3_sensor = PythonSensor(
         task_id="check_s3_file",
         python_callable=check_s3_file,
         mode="reschedule",
         poke_interval=60,
-        timeout=60*60,
+        timeout=60*60*12,
     )
+
 
 
     s3_to_ch_full = SparkSubmitOperator(
