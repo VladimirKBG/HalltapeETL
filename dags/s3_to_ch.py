@@ -17,10 +17,10 @@ s3_to_ch = DAG(
     dag_id = "s3_to_ch_dag",
     start_date = pendulum.datetime(2025, 7, 23, 0, 0, 0),
     schedule="15 12 * * *",
-    max_active_tasks=2,
+    max_active_tasks=1,
     default_args=default_args,
     catchup=True,
-    max_active_runs=2,
+    max_active_runs=1,
     doc_md=__doc__,
 )
 
