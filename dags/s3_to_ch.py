@@ -13,7 +13,6 @@ import boto3
 
 default_args = {'owner':'owner', 'retries':3}
 
-
 s3_to_ch = DAG(
     dag_id = "s3_to_ch_dag",
     start_date = pendulum.datetime(2025, 7, 23, 0, 0, 0),
