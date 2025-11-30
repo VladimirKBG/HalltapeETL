@@ -1,3 +1,4 @@
+*.pyc
 logs/
 data_lake/
 synthetic_data/.ipynb_checkpoints
@@ -12,3 +13,8 @@ dags/.DS_Store
 .DS_Store
 s3_storage/
 temp/
+.venv/
+data/*
+!data/scripts
+plugins/__pycache__
+
