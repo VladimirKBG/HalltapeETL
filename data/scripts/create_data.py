@@ -1,4 +1,5 @@
 import random
+import argparse
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from decimal import Decimal
@@ -169,12 +170,63 @@ def write_to_csv(data: list, fname: str, append: bool=False) -> None:
     df.to_csv(dir, index=False)
 
 if __name__ == "__main__":
-    categories = generate_categories(20)
-    products = generate_products(100, categories=categories)
-    clients = generate_clients(20)
-    orders = generate_orders(30, clients=clients, start_dt="2023-01-01T12:12:12")
-    order_items = generate_order_items(100, orders=orders, products=products)
+    p = argparse.ArgumentParser(description="Create/add sample data files.")
+    g = p.add_argument_group("Owerwrite options")
+    g.add_argument("-a", "--append", action="store_true", 
+                   help="Set write mode to appending data to the end if files exists.")
+    g = p.add_argument_group("Data options")
+    g.add_argument("-ord", "--orders", type=int, default=0,
+                   help="Number of rows generated for order file.")
+    g.add_argument("-oi", "--order_items", type=int, default=0,
+                   help="Number of rows generated for order_item file.")
+    g.add_argument("-p", "--products", type=int, default=0,
+                   help="Number of rows generated for product file.")
+    g.add_argument("-cat", "--categories", type=int, default=0,
+                   help="Number of rows generated for category file.")
+    g.add_argument("-c", "--clients", type=int, default=0,
+                   help="Number of rows generated for client file.")
+    args = p.parse_args()
+    if args.append:
+        raise NotImplementedError("Append option is not implemented yet.")
+    
+    if args.categories:
+        categories = generate_categories(args.categories)
+    else:
+        categories = generate_categories(20)
+
+    if args.products:
+        products = generate_products(args.products, categories=categories)
+    else:
+        products = generate_products(100, categories=categories)
+
+    if args.clients:
+        clients = generate_clients(args.clients)
+    else:
+        clients = generate_clients(30)
+
+    if args.orders:
+        orders = generate_orders(
+            args.orders, 
+            clients=clients, 
+            start_dt=(datetime.now() - relativedelta(years=2)).isoformat())
+    else:
+        orders = generate_orders(
+            1000, 
+            clients=clients, 
+            start_dt=(datetime.now() - relativedelta(years=2)).isoformat())
+        
+    if args.order_items:
+        order_items = generate_order_items(
+            args.order_items, 
+            orders=orders, 
+            products=products)
+    else:
+        order_items = generate_order_items(10000, orders=orders, products=products)
     write_to_csv(categories, "categories.csv")
+    write_to_csv(products, "products.csv")
+    write_to_csv(clients, "clients.csv")
+    write_to_csv(orders, "orders.csv")
+    write_to_csv(order_items, "order_items.csv")
     
 
 
