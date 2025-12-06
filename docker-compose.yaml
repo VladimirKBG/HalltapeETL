@@ -44,6 +44,7 @@ services:
       - "5432:5432"
     restart: always
     volumes:
+      - ./data/csv:/csv
       - postgres-db-volume:/var/lib/postgresql/data
       - ./src/init_db:/docker-entrypoint-initdb.d
     healthcheck:
