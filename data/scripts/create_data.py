@@ -29,7 +29,7 @@ def generate_categories(cnt: int, levels: int=2, start_sk: int=1) -> list:
             temp = {
                 "sk": idx,
                 "bk": fake.unique.microservice(),
-                "category": rng.choice(categories)["sk"] if categories else None,
+                "category": rng.choice(categories)["sk"] if categories else '',
                 "description": fake.sentence(nb_words=rng.randint(5, 15)),
                 }
             idx += 1
@@ -141,7 +141,7 @@ def generate_orders(
             "bk": fake.uuid4(),
             "client": rng.choice(clients)["sk"],
             "created_at": dt,
-            "closed_at": str(closing_date),
+            "closed_at": str(closing_date) if closing_date else None,
         })
     return orders
 
