@@ -1,19 +1,20 @@
 import os
+import pendulum
 from airflow import DAG
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
-from airflow.utils.dates import days_ago
+
 
 
 default_args = {
     'owner': 'loader',
-    'start_date': days_ago(1),
+    'start_date': pendulum.now().subtract(days=1),
     'retries': 1
 }
 
 dag = DAG(
     dag_id="Load_JDBC__app_installs",
     default_args=default_args,
-    schedule_interval="*/1 * * * *",
+    schedule="*/1 * * * *",
     description="Spark Submit Inc",
     catchup=False,
     tags=['spark', 'batch']
