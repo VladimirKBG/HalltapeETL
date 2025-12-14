@@ -19,7 +19,7 @@ with DAG(
     start_date=pendulum.now() - pendulum.duration(minutes=5),
     catchup=False,
     tags=["test"],
-    description="Test example DAG, didn't use."
+    description="Test example DAG, didn't use.",
 ) as dag:
     """
     ###DAG documentation.
