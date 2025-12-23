@@ -7,3 +7,7 @@ dbt-core
 dbt-clickhouse
 faker
 psycopg2-binary
+apache-airflow-providers-fab
+apache-airflow-providers-amazon
+faker
+faker_microservice

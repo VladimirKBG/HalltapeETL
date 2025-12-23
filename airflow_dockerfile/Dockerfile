@@ -8,6 +8,8 @@ RUN python -m pip install --upgrade pip && \
 USER root
 RUN apt update && \
     apt install -y openjdk-17-jdk
+RUN mkdir -p /opt/airflow/logs/dag_processor
+RUN chown -R 50000:0 /opt/airflow/logs/dag_processor
 
 USER airflow
 

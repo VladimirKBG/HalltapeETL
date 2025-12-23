@@ -1,5 +1,6 @@
 *.pyc
 logs/
+dag_boundles/
 data_lake/
 synthetic_data/.ipynb_checkpoints
 jupyter_notebook/*
@@ -17,4 +18,6 @@ temp/
 data/*
 !data/scripts
 plugins/__pycache__
+airflow.db
 
+dag_bundles/.probe
