@@ -14,8 +14,8 @@ from create_data import update_data
 
 default_args = {
     "depends_on_past": False,
-    "retries": 1,
-    "retry_delay": pendulum.duration(minutes=5),
+    "retries": 0,
+    "retry_delay": pendulum.duration(seconds=15),
 }
 
 @dag(
@@ -24,7 +24,7 @@ default_args = {
     schedule=pendulum.duration(minutes=15),
     start_date=pendulum.datetime(2025, 12, 6),
     catchup=False,
-    tags=["source"], 
+    tags=["source", "csv"], 
 )
 def update_data__csv():
     path = get_path_to_csv_data()

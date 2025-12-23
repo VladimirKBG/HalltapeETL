@@ -7,7 +7,7 @@ from airflow.providers.standard.operators.bash import BashOperator
 
 default_args = {
     "depends_on_past": False,
-    "retries": 5,
+    "retries": 1,
     "rerty_delay": pendulum.duration(minutes=1),
 }
 
@@ -40,7 +40,7 @@ with DAG(
         task_id="sleep",
         depends_on_past=False,
         bash_command="sleep 5",
-        retries=3,
+        retries=1,
     )
     templated_command = textwrap.dedent(
         """

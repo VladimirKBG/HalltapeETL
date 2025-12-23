@@ -6,12 +6,21 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from decimal import Decimal
 from pathlib import Path
+from enum import Enum
 
 from faker import Faker
 import faker_microservice
 
 
 SEED = 0
+
+
+class DataSetSize(int, Enum):
+    xs = 1
+    s = 3
+    m = 10
+    l = 100
+
 
 def generate_categories(cnt: int, levels: int=2, start_sk: int=1) -> list:
     rng = random.Random()
@@ -191,7 +200,7 @@ def _read_last_nonempty_line(path, skip_final_newlines=True):
 
 def read_from_csv(path: Path | str):
     try:
-        return pd.read_csv(path).to_dict(orient="records")
+        return pd.read_csv(path, keep_default_na=False).to_dict(orient="records")
     except pd.errors.EmptyDataError:
         return []
     
@@ -274,12 +283,15 @@ if __name__ == "__main__":
     
 
 def update_categories(path: str | Path, cnt: int) -> list:
-    data = read_from_csv(path)
+    try:
+        data = pd.read_csv(path, keep_default_na=False, dtype={'category': 'Int64'}).to_dict(orient="records")
+    except pd.errors.EmptyDataError:
+        data = []
     start_sk = data[-1]["sk"] + 1 if data else 1
     new_data = generate_categories(cnt, start_sk=start_sk)
     data.extend(new_data)
     df = pd.DataFrame(new_data)
-    df.to_csv(path, mode="a")
+    df.to_csv(path, mode="a", index=False, header=False)
     return data
 
 def update_clients(path: str | Path, cnt: int) -> list:
@@ -288,7 +300,7 @@ def update_clients(path: str | Path, cnt: int) -> list:
     new_data = generate_clients(cnt, start_sk=start_sk)
     data.extend(new_data)
     df = pd.DataFrame(new_data)
-    df.to_csv(path, mode="a")
+    df.to_csv(path, mode="a", index=False, header=False)
     return data
 
 def update_products(path: str | Path, cnt: int, categories: list) -> list:
@@ -297,7 +309,7 @@ def update_products(path: str | Path, cnt: int, categories: list) -> list:
     new_data = generate_products(cnt, categories, start_sk=start_sk)
     data.extend(new_data)
     df = pd.DataFrame(new_data)
-    df.to_csv(path, mode="a")
+    df.to_csv(path, mode="a", index=False, header=False)
     return data
 
 def update_orders(path: str | Path, cnt: int, clients: list) -> list:
@@ -306,7 +318,7 @@ def update_orders(path: str | Path, cnt: int, clients: list) -> list:
     new_data = generate_orders(cnt, clients, start_sk=start_sk)
     data.extend(new_data)
     df = pd.DataFrame(new_data)
-    df.to_csv(path, mode="a")
+    df.to_csv(path, mode="a", index=False, header=False)
     return data
 
 def update_order_items(path: str | Path, cnt: int, *, orders: list, products: list) -> list:
@@ -315,16 +327,16 @@ def update_order_items(path: str | Path, cnt: int, *, orders: list, products: li
     new_data = generate_order_items(cnt, orders, products, start_sk=start_sk)
     data.extend(new_data)
     df = pd.DataFrame(new_data)
-    df.to_csv(path, mode="a")
+    df.to_csv(path, mode="a", index=False, header=False)
     return new_data
 
 
 def update_data(path: str, clients: int=0, orders: int=20, categories: int=0, products: int=1, order_items:int=100):
-    path_categories = path + "categories.csv"
-    path_orders = path + "orders.csv"
-    path_clients = path + "clients.csv"
-    path_products = path + "products.csv"
-    path_order_items = path + "order_items.csv"
+    path_categories = path + "/categories.csv"
+    path_orders = path + "/orders.csv"
+    path_clients = path + "/clients.csv"
+    path_products = path + "/products.csv"
+    path_order_items = path + "/order_items.csv"
     all_clients = update_clients(path_clients, clients)
     all_categories = update_categories(path_categories, categories)
     all_orders = update_orders(path_orders, orders, all_clients)
@@ -332,8 +344,45 @@ def update_data(path: str, clients: int=0, orders: int=20, categories: int=0, pr
     new_order_items = update_order_items(path_order_items, order_items, orders=all_orders, products=all_products)
     
 
-def truncate_file(path, *, before: int=0, after: int=0):
+def truncate_file(path: str, *, before: int=0, after: int=0):
     df = pd.read_csv(path, nrows=after, skiprows=before)
     df.to_csv(path)
 
 
+def truncate_data_files(path: str):
+    path_categories = path + "/categories.csv"
+    path_orders = path + "/orders.csv"
+    path_clients = path + "/clients.csv"
+    path_products = path + "/products.csv"
+    path_order_items = path + "/order_items.csv"
+    truncate_file(path_categories)
+    truncate_file(path_orders)
+    truncate_file(path_clients)
+    truncate_file(path_products)
+    truncate_file(path_order_items)
+
+def generate_initial_data(path: str, size: DataSetSize=DataSetSize.l):
+    paths = {
+        "clients": path + "/clients.csv",
+        "categories": path + "/categories.csv",
+        "orders": path + "/orders.csv",
+        "products": path + "/products.csv",
+        "order_items": path + "/order_items.csv",
+    }
+    cnts = {
+        "clients": size if size > DataSetSize.xs else 0,
+        "categories": size if size > DataSetSize.xs else 0,
+        "orders": size*10,
+        "products": size*2,
+        "order_items": size*50,
+    }
+    new_clients = generate_clients(cnts["clients"])
+    new_categories = generate_categories(cnts["categories"])
+    new_products = generate_products(cnts["products"], new_categories)
+    new_orders = generate_orders(cnts["orders"], new_clients)
+    new_order_items = generate_order_items(cnts["order_items"], orders=new_orders, products=new_products)
+    pd.DataFrame(new_clients).to_csv(paths["clients"], index=False)
+    pd.DataFrame(new_categories).to_csv(paths["categories"], index=False)
+    pd.DataFrame(new_products).to_csv(paths["products"], index=False)
+    pd.DataFrame(new_orders).to_csv(paths["orders"], index=False)
+    pd.DataFrame(new_order_items).to_csv(paths["order_items"], index=False)
