@@ -1,0 +1,1 @@
+SELECT COUNT(sk) categories_cnt FROM raw.dim_categories_temp;

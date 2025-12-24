@@ -1,0 +1,1 @@
+SELECT COUNT(sk) FROM raw.dim_clients_temp;

@@ -1,0 +1,1 @@
+SELECT COUNT(sk) FROM raw.fct_orders_temp;

@@ -25,7 +25,7 @@ class DataSetSize(int, Enum):
 def generate_categories(cnt: int, levels: int=2, start_sk: int=1) -> list:
     rng = random.Random()
     fake = Faker("ru_RU")
-    fake.seed_instance(SEED)
+    fake.seed_instance(start_sk)
     fake.add_provider(faker_microservice.Provider)
 
     categories = []
@@ -51,9 +51,9 @@ def generate_categories(cnt: int, levels: int=2, start_sk: int=1) -> list:
 
 
 def generate_products(cnt: int, categories: list, start_sk: int=1):
-    rng = random.Random(SEED)
+    rng = random.Random(start_sk)
     fake = Faker('ru_RU')
-    fake.seed_instance(SEED)
+    fake.seed_instance(start_sk)
 
     childs = {}
     for cat in categories:
@@ -88,9 +88,9 @@ def generate_products(cnt: int, categories: list, start_sk: int=1):
     return products
 
 def generate_clients(cnt: int, start_sk: int=1) -> list:
-    rng = random.Random(SEED)
+    rng = random.Random(start_sk)
     fake = Faker("ru_RU")
-    fake.seed_instance(SEED)   
+    fake.seed_instance(start_sk)   
 
     ltrs = ['У', 'К', 'Н', 'Е', 'Г', 'Ш', 'У', 'З', 'Х', 'А', 'А', 'А', 'А',
             'Ф', 'В', 'А', 'П', 'П', 'П', 'П', 'О', 'Л', 'О', 'О', 'О', 'О',
@@ -127,9 +127,9 @@ def generate_orders(
         start_dt: str="0000-00-00T16:20:00",) -> list:
     if end_dt <= start_dt:
         raise ValueError("End date must be greater than start date.")
-    rng = random.Random(SEED)
+    rng = random.Random(start_sk)
     fake = Faker("ru_RU")
-    fake.seed_instance(SEED)
+    fake.seed_instance(start_sk)
 
     orders = []
     for idx in range(start_sk, start_sk + cnt):
@@ -156,9 +156,9 @@ def generate_orders(
     return orders
 
 def generate_order_items(cnt: int, orders: list, products: list, start_sk: int=1) -> list:
-    rng = random.Random(SEED)
+    rng = random.Random(start_sk)
     fake = Faker("ru_RU")
-    fake.seed_instance(SEED)
+    fake.seed_instance(start_sk)
 
     order_items = []
     for idx in range(start_sk, start_sk + cnt):

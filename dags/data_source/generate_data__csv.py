@@ -2,8 +2,7 @@ import pendulum
 import sys
 
 from airflow.sdk import dag, task
-from update_data__csv import get_path_to_csv_data
-from truncate_data__csv import truncate_csv_data
+from data_source.update_data__csv import get_path_to_csv_data
 
 SCRIPTS_ROOT = "/data/scripts"
 if SCRIPTS_ROOT not in sys.path:
