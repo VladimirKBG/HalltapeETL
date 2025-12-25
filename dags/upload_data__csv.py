@@ -3,6 +3,7 @@ import csv
 
 from airflow.sdk import dag, task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
+from airflow.providers.standard.sensors.external_task import ExternalTaskSensor
 
 
 SCHEMA = "raw"
@@ -21,10 +22,17 @@ TABLES = {
     "order_items": "fct_order_items",
 }
 
+default_args = {
+    "depends_on_past": False,
+    "retries": 3,
+    "rerty_delay": pendulum.duration(seconds=15),
+}
+
 @dag(
-    start_date=pendulum.datetime(2025, 12, 23),
-    schedule=pendulum.duration(minutes=30),
+    start_date=pendulum.datetime(2025, 12, 25, 8, 5),
+    schedule=pendulum.duration(minutes=3),
     template_searchpath="/sql",
+    default_args=default_args,
     description="Create tables, upload data from csv files.",
     tags=["upload", "csv"],
     params={
@@ -34,62 +42,80 @@ TABLES = {
     }
 )
 def upload_data__csv():
+    wait_for_upstream = ExternalTaskSensor(
+        task_id="wait_for__update_data__csv",
+        external_dag_id="update_data__csv",
+        mode="reschedule",
+        execution_date_fn=lambda dt, **ctx: dt,
+        allowed_states=["success"],
+        poke_interval=pendulum.duration(seconds=60),
+        timeout = 600,
+    )
     upload_categories = SQLExecuteQueryOperator(
         task_id="upload_categories",
         sql="/sql/ddl/categories.sql",
         conn_id="airflow",
+        retries=0,
     )
     upload_clients = SQLExecuteQueryOperator(
         task_id="upload_clients",
         sql="/sql/ddl/clients.sql",
         conn_id="airflow",
+        retries=0,
     )
     upload_products = SQLExecuteQueryOperator(
         task_id="upload_products",
         sql="/sql/ddl/products.sql",
         conn_id="airflow",
+        retries=0,
     )
     upload_orders = SQLExecuteQueryOperator(
         task_id="upload_orders",
         sql="/sql/ddl/orders.sql",
         conn_id="airflow",
+        retries=0,
     )
     upload_order_items = SQLExecuteQueryOperator(
         task_id="upload_order_items",
         sql="/sql/ddl/order_items.sql",
         conn_id="airflow",
+        retries=0,
     )
     cnt_categories = SQLExecuteQueryOperator(
         task_id="cnt_categories",
         sql="/sql/dml/categories.sql",
         conn_id="airflow",
+        retry_delay=pendulum.duration(seconds=1),
     )
     cnt_clients = SQLExecuteQueryOperator(
         task_id="cnt_clients",
         sql="/sql/dml/clients.sql",
         conn_id="airflow",
+        retry_delay=pendulum.duration(seconds=1),
     )
     cnt_products = SQLExecuteQueryOperator(
         task_id="cnt_products",
         sql="/sql/dml/products.sql",
         conn_id="airflow",
+        retry_delay=pendulum.duration(seconds=1),
     )
     cnt_orders = SQLExecuteQueryOperator(
         task_id="cnt_orders",
         sql="/sql/dml/orders.sql",
         conn_id="airflow",
+        retry_delay=pendulum.duration(seconds=1),
     )
     cnt_order_items = SQLExecuteQueryOperator(
         task_id="cnt_order_items",
         sql="/sql/dml/order_items.sql",
         conn_id="airflow",
+        retry_delay=pendulum.duration(seconds=1),
     )
 
-    (
-        upload_categories, upload_clients 
-        >> upload_products, upload_orders 
-        >> upload_order_items 
-    ) #type: ignore
+    wait_for_upstream >> [upload_categories, upload_clients, upload_products, upload_orders, upload_order_items] #type: ignore
+    upload_categories >> upload_products #type: ignore
+    upload_clients >> upload_orders #type: ignore
+    [upload_products, upload_orders]  >> upload_order_items #type: ignore
     upload_categories >> cnt_categories #type: ignore
     upload_clients >> cnt_clients #type: ignore
     upload_products >> cnt_products #type: ignore
@@ -97,7 +123,9 @@ def upload_data__csv():
     upload_order_items >> cnt_order_items #type: ignore
     check_rows_count(cnt_categories.output)
 
-@task
+@task(
+    retry_delay=pendulum.duration(seconds=1),
+)
 def check_rows_count(cnt_cat):
     cnt_in_sql = cnt_cat[0][0]
     with open("/data/csv/categories.csv", "r") as file:

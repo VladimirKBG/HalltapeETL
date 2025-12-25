@@ -13,16 +13,16 @@ from create_data import update_data
 
 
 default_args = {
-    "depends_on_past": False,
-    "retries": 0,
+    "depends_on_past": True,
+    "retries": 1,
     "retry_delay": pendulum.duration(seconds=15),
 }
 
 @dag(
     default_args=default_args,
     description="Update data in data/csv directory.",
-    schedule=pendulum.duration(minutes=15),
-    start_date=pendulum.datetime(2025, 12, 6),
+    schedule=pendulum.duration(minutes=3),
+    start_date=pendulum.datetime(2025, 12, 25, 8, 5),
     catchup=False,
     tags=["source", "csv"], 
 )
