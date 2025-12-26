@@ -4,6 +4,7 @@ import csv
 from airflow.sdk import dag, task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.standard.sensors.external_task import ExternalTaskSensor
+from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
 
 
 SCHEMA = "raw"
@@ -111,6 +112,19 @@ def upload_data__csv():
         conn_id="airflow",
         retry_delay=pendulum.duration(seconds=1),
     )
+    trigger_notifyier = TriggerDagRunOperator(
+        task_id="trigger_notifyier",
+        trigger_dag_id="notify_tg",
+        conf={"message": "CSV data successfully uploaded", "logical_date": "{{ logical_date }}",},
+        wait_for_completion=False,
+    )
+    trigger_notifyer_on_failure = TriggerDagRunOperator(
+        task_id="notify_on_failure",
+        trigger_dag_id="notify_tg",
+        conf={"message": "DAG id={{ dag.dag_id }} FAILED in run id={{ run_id }}", "logical_date": "{{ logical_date }}"},
+        wait_for_completion=False,
+        trigger_rule="one_failed"
+    )
 
     wait_for_upstream >> [upload_categories, upload_clients, upload_products, upload_orders, upload_order_items] #type: ignore
     upload_categories >> upload_products #type: ignore
@@ -121,7 +135,8 @@ def upload_data__csv():
     upload_products >> cnt_products #type: ignore
     upload_orders >> cnt_orders #type: ignore
     upload_order_items >> cnt_order_items #type: ignore
-    check_rows_count(cnt_categories.output)
+    [check_rows_count(cnt_categories.output), cnt_order_items, cnt_orders, cnt_products] >> trigger_notifyier #type: ignore
+    trigger_notifyier >> trigger_notifyer_on_failure #type: ignore
 
 @task(
     retry_delay=pendulum.duration(seconds=1),
