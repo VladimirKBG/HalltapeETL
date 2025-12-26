@@ -21,8 +21,8 @@ default_args = {
 @dag(
     default_args=default_args,
     description="Update data in data/csv directory.",
-    schedule=pendulum.duration(minutes=3),
-    start_date=pendulum.datetime(2025, 12, 25, 8, 5),
+    schedule="0,5,10,15,20,25,30,35,40,45,50,55 * * * *",
+    start_date=pendulum.datetime(2025, 12, 25, 12, 00),
     catchup=False,
     tags=["source", "csv"], 
 )

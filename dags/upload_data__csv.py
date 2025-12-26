@@ -29,8 +29,8 @@ default_args = {
 }
 
 @dag(
-    start_date=pendulum.datetime(2025, 12, 25, 8, 5),
-    schedule=pendulum.duration(minutes=3),
+    start_date=pendulum.datetime(2025, 12, 25, 12, 00),
+    schedule="0,10,20,30,40,50 * * * *",
     template_searchpath="/sql",
     default_args=default_args,
     description="Create tables, upload data from csv files.",
@@ -46,10 +46,10 @@ def upload_data__csv():
         task_id="wait_for__update_data__csv",
         external_dag_id="update_data__csv",
         mode="reschedule",
-        execution_date_fn=lambda dt, **ctx: dt,
+        #execution_date_fn=lambda dt, **ctx: dt,
         allowed_states=["success"],
         poke_interval=pendulum.duration(seconds=60),
-        timeout = 600,
+        timeout = 150,
     )
     upload_categories = SQLExecuteQueryOperator(
         task_id="upload_categories",
