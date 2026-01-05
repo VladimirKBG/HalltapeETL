@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS raw.dim_categories_temp;

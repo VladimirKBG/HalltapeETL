@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS raw.fct_orders_temp;

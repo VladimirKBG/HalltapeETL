@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS raw.dim_order_items_temp;
