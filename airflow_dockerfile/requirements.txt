@@ -1,4 +1,5 @@
-airflow-providers-clickhouse==0.0.1
+airflow-provider-clickhouse
+clickhouse-driver
 apache-airflow-providers-apache-spark==4.11.1
 apache-airflow-providers-telegram
 pandas

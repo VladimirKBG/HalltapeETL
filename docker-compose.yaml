@@ -87,6 +87,7 @@ services:
     volumes:
       - ./clickhouse:/var/lib/clickhouse
       - ./data_lake:/opt/data_lake
+      - ./data:/opt/data_lake/data 
       - ./docker_related_config.xml:/etc/clickhouse-server/config.d/docker_related_config.xml
       - ./clickhouse/init:/docker-entrypoint-initdb.d
     networks:
