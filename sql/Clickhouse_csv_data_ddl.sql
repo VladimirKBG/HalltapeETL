@@ -1,12 +1,12 @@
 CREATE TABLE raw.categories 
 (
-	sk Int32 NOT NULL,
-	bk text NOT NULL,
+	sk Int32,
+	bk text,
 	category Int32 NULL,
 	description text NULL,
-	uploaded_at timestamp NOT NULL
+	uploaded_at timestamp
 ) Engine = MergeTree()
-PRIMARY KEY (uploaded_at, sk);;
+PRIMARY KEY (uploaded_at, sk);
 ALTER TABLE raw.categories MODIFY COLUMN uploaded_at timestamp;
 DROP TABLE raw.categories;
 

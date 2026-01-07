@@ -6,7 +6,7 @@ from airflow.providers.standard.operators.python import PythonOperator
 from clickhouse_driver import Client
 
 
-def run_clickhouse_sql(sqls: str, conn_id:str="clickhouse"):
+def run_clickhouse_sqls(sqls: str, conn_id:str="clickhouse"):
     conn = BaseHook.get_connection(conn_id=conn_id)
     client = Client(
         host=conn.host,
@@ -21,7 +21,6 @@ def run_clickhouse_sql(sqls: str, conn_id:str="clickhouse"):
     start_date=pendulum.datetime(2025, 12, 25, 12, 00),
     dag_id="ch_drop_tables__csv",
     schedule=None,
-    template_searchpath="/sql_ch",
     description="Drop tables for csv data.",
     default_args={
         "retries": 1,
@@ -34,9 +33,9 @@ def run_clickhouse_sql(sqls: str, conn_id:str="clickhouse"):
     tags=["clickhouse", "ddl", "csv"],
 )
 def ch_drop_tables__csv():
-    run = PythonOperator(
+    drop = PythonOperator(
         task_id="clickhouse_drop_tables_csv",
-        python_callable=run_clickhouse_sql,
+        python_callable=run_clickhouse_sqls,
         op_kwargs={
             "sqls": [
                 "DROP TABLE IF EXISTS {{ params.schema }}.order_items;",
