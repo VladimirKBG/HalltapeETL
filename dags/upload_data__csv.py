@@ -31,7 +31,7 @@ default_args = {
 
 @dag(
     start_date=pendulum.datetime(2025, 12, 25, 12, 00),
-    schedule="0 */10 * * * * *",
+    schedule="0/10 * * * *",
     template_searchpath="/sql",
     default_args=default_args,
     description="Create tables, upload data from csv files.",

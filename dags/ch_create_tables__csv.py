@@ -37,7 +37,8 @@ def ch_create_tables__csv():
                         bk text,
                         category Int32 NULL,
                         description text NULL,
-                        uploaded_at {{ date_type }}
+                        uploaded_at DateTime
+                        {% if params.schema != 'raw' %}, hash UInt64 {% endif %}
                     ) Engine = MergeTree()
                     PRIMARY KEY (uploaded_at, sk);
                 """,
@@ -51,7 +52,8 @@ def ch_create_tables__csv():
                     address text NULL,
                     email text NULL,
                     phone text NULL,
-                    uploaded_at {{ date_type }}
+                    uploaded_at DateTime
+                    {% if params.schema != 'raw' %}, hash UInt64 {% endif %}
                 ) Engine = MergeTree()
                 PRIMARY KEY (uploaded_at, sk);
                 """,
@@ -63,9 +65,10 @@ def ch_create_tables__csv():
                     order_id Int32,
                     product Int32,
                     amount Int32,
-                    price numeric(12, 2),
-                    discount numeric(2, 2) DEFAULT 0,
-                    uploaded_at {{ date_type }},
+                    price Decimal64(2),
+                    discount Decimal64(2) DEFAULT 0,
+                    uploaded_at DateTime,
+                    {% if params.schema != 'raw' %} hash UInt64, {% endif %}
                     CONSTRAINT order_items_amount_check CHECK (amount > 0),
                     CONSTRAINT order_items_discount_check CHECK (discount >= 0),
                     CONSTRAINT order_items_price_check CHECK (price > 0)
@@ -79,8 +82,9 @@ def ch_create_tables__csv():
                     bk text,
                     category Int32,
                     description text NULL,
-                    service_time {{ date_type }},
-                    uploaded_at {{ date_type }}
+                    service_time String,
+                    uploaded_at DateTime
+                    {% if params.schema != 'raw' %}, hash UInt64 {% endif %}
                 ) ENGINE = MergeTree()
                 PRIMARY KEY (uploaded_at, sk);
                 """,
@@ -92,7 +96,8 @@ def ch_create_tables__csv():
                     client Int32,
                     created_at {{ date_type }},
                     closed_at {{ date_type }} NULL,
-                    uploaded_at {{ date_type }}
+                    uploaded_at DateTime
+                    {% if params.schema != 'raw' %}, hash UInt64 {% endif %}
                 ) ENGINE = MergeTree()
                 PRIMARY KEY (created_at, client, sk);
                 """,
