@@ -130,4 +130,60 @@ SELECT name, active, min_date, max_date FROM system.parts
 WHERE database='prod' AND table='ordered_products_count' LIMIT 50;
 
 
+SELECT *
+FROM system.asynchronous_metric_log;
+
+
+CREATE TABLE prod.music_service_clickstream (
+	event_type_id UInt16,
+	event_type String,
+	user_id UUID,
+	platform_token String,
+	ipv4 IPv4,
+	country String,
+	uuid_track_current UUID,
+	uuid_track_prev UUID,
+	ts UInt64,
+	kafka_topic String DEFAULT '',
+	kafka_partition UInt32 DEFAULT 0,
+	kafka_offset UInt64 DEFAULT 0
+) ENGINE = MergeTree
+PARTITION BY ts
+ORDER BY (country, event_type_id, user_id);
+
+
+DROP TABLE stg.music_service_clickstream;
+
+CREATE TABLE stg.music_service_clickstream (
+	raw String
+) ENGINE = Kafka
+SETTINGS
+	kafka_broker_list = 'kafka:29092',
+	kafka_topic_list = 'test',
+	kafka_group_name = 'clickhouse_music_service_clickstream',
+	kafka_format = 'JSONAsString',
+	kafka_num_consumers = 1,
+    kafka_max_block_size = 1048576,
+    kafka_flush_interval_ms = 10000;	
+
+CREATE MATERIALIZED VIEW stg.music_service_clickstream_mv TO prod.music_service_clickstream AS
+SELECT 
+    toUInt16(JSONExtractUInt(raw, 'event_params', 'event_type_id')) AS event_type_id,
+    JSONExtractString(raw, 'event_params', 'event_type') AS event_type,
+    toUUIDOrDefault(JSONExtractString(raw, 'event_params', 'user_id'), '00000000-0000-0000-0000-000000000000'::UUID)  AS user_id,
+    JSONExtractString(raw, 'event_params', 'platform_token') AS platform_token,
+    toIPv4(JSONExtractString(raw, 'event_params', 'ipv4')) AS ipv4,
+    JSONExtractString(raw, 'event_params', 'country')       AS country, 
+    toUUIDOrDefault(JSONExtractString(raw, 'event_params', 'uuid_track_current'), '00000000-0000-0000-0000-000000000000'::UUID)  AS uuid_track_current,
+    toUUIDOrDefault(JSONExtractString(raw, 'event_params', 'uuid_track_prev'), '00000000-0000-0000-0000-000000000000'::UUID)  AS uuid_track_prev,
+    JSONExtractUInt(raw, 'event_timestamp_ms', 'ts_ms')        AS ts,
+    _topic        AS kafka_topic,
+    _partition    AS kafka_partition,
+    _offset       AS kafka_offset
+FROM stg.music_service_clickstream;
+
+TRUNCATE TABLE prod.music_service_clickstream;
+
+
+
 

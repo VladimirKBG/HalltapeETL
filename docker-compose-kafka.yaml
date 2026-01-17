@@ -171,6 +171,9 @@ services:
       start_period: 10s
       retries: 20
       interval: 10s
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-data:/var/lib/zookeeper/log
     networks:
       all_in_one:
 
@@ -201,6 +204,8 @@ services:
       interval: 5s
       timeout: 10s
       retries: 10
+    volumes:
+      - kafka-data:/var/lib/kafka/data
     networks:
       all_in_one:
 
@@ -296,7 +301,8 @@ services:
 volumes:
   postgres-db-volume:
   clickhouse:
-
+  kafka-data:
+  zookeeper-data:
 
 networks:
   all_in_one:
